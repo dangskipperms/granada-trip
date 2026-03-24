@@ -457,12 +457,14 @@ function initMap() {
       })
     }).addTo(map);
 
-    // Build slideshow HTML (first 8 photos)
-    const slideCount = Math.min(l.count || 8, 8);
+    // Build slideshow HTML (first 8 photos — use remote Airbnb URLs)
+    const remote = getRemotePhotos()[l.folder];
+    const slideCount = Math.min(remote ? remote.length : (l.count || 8), 8);
     const sid = `sl-${l.id}`;
     let slidesHtml = `<div class="pop-slides" id="${sid}">`;
     for(let i=0;i<slideCount;i++){
-      slidesHtml += `<img src="photos/${l.folder}/${String(i).padStart(2,'0')}.jpg" class="${i===0?'vis':''}">`;
+      const src = (remote && remote[i]) ? remote[i] : `photos/${l.folder}/${String(i).padStart(2,'0')}.jpg`;
+      slidesHtml += `<img src="${src}" class="${i===0?'vis':''}">`;
     }
     slidesHtml += `<button class="sl-btn sl-prev" onclick="popSlide('${sid}',-1)">\u2039</button>`;
     slidesHtml += `<button class="sl-btn sl-next" onclick="popSlide('${sid}',1)">\u203A</button>`;
