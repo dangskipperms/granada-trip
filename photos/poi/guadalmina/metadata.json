@@ -1,0 +1,43 @@
+{
+  "query": "Guadalmina beach Marbella",
+  "category": null,
+  "search_terms": [
+    "playa Guadalmina",
+    "Estepona beach sand"
+  ],
+  "count_requested": 10,
+  "count_downloaded": 5,
+  "width": 640,
+  "photos": [
+    {
+      "index": 0,
+      "filename": "00.jpg",
+      "source": "Guadalmina Beach (4253672479).jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:Guadalmina%20Beach%20%284253672479%29.jpg"
+    },
+    {
+      "index": 1,
+      "filename": "01.jpg",
+      "source": "Guadalmina Beach (4254435928).jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:Guadalmina%20Beach%20%284254435928%29.jpg"
+    },
+    {
+      "index": 2,
+      "filename": "02.jpg",
+      "source": "Guadalmina 1.jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:Guadalmina%201.jpg"
+    },
+    {
+      "index": 3,
+      "filename": "03.jpg",
+      "source": "Guadalmina 2.JPG",
+      "url": "https://commons.wikimedia.org/wiki/File:Guadalmina%202.JPG"
+    },
+    {
+      "index": 4,
+      "filename": "04.jpg",
+      "source": "Guadalmina Beach (4228830007).jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:Guadalmina%20Beach%20%284228830007%29.jpg"
+    }
+  ]
+}

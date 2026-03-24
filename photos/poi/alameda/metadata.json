@@ -1,0 +1,73 @@
+{
+  "query": "Alameda park Marbella",
+  "category": null,
+  "search_terms": [
+    "Parque de la Alameda Marbella",
+    "Marbella park garden"
+  ],
+  "count_requested": 10,
+  "count_downloaded": 10,
+  "width": 640,
+  "photos": [
+    {
+      "index": 0,
+      "filename": "00.jpg",
+      "source": "Marbella 2015 10 20 1754 (24372840259).jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:Marbella%202015%2010%2020%201754%20%2824372840259%29.jpg"
+    },
+    {
+      "index": 1,
+      "filename": "01.jpg",
+      "source": "Marbella - Parque de la Alameda 02.jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:Marbella%20-%20Parque%20de%20la%20Alameda%2002.jpg"
+    },
+    {
+      "index": 2,
+      "filename": "02.jpg",
+      "source": "Marbella - Parque de la Alameda 06.jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:Marbella%20-%20Parque%20de%20la%20Alameda%2006.jpg"
+    },
+    {
+      "index": 3,
+      "filename": "03.jpg",
+      "source": "Marbella - Parque de la Alameda 01.jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:Marbella%20-%20Parque%20de%20la%20Alameda%2001.jpg"
+    },
+    {
+      "index": 4,
+      "filename": "04.jpg",
+      "source": "Marbella - Parque de la Alameda 03.jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:Marbella%20-%20Parque%20de%20la%20Alameda%2003.jpg"
+    },
+    {
+      "index": 5,
+      "filename": "05.jpg",
+      "source": "Marbella - Parque de la Alameda 09.jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:Marbella%20-%20Parque%20de%20la%20Alameda%2009.jpg"
+    },
+    {
+      "index": 6,
+      "filename": "06.jpg",
+      "source": "Parque de la Alameda in Marbella.jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:Parque%20de%20la%20Alameda%20in%20Marbella.jpg"
+    },
+    {
+      "index": 7,
+      "filename": "07.jpg",
+      "source": "Marbella - Parque de la Alameda 08.jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:Marbella%20-%20Parque%20de%20la%20Alameda%2008.jpg"
+    },
+    {
+      "index": 8,
+      "filename": "08.jpg",
+      "source": "Marbella - Parque de la Alameda 07.jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:Marbella%20-%20Parque%20de%20la%20Alameda%2007.jpg"
+    },
+    {
+      "index": 9,
+      "filename": "09.jpg",
+      "source": "Marbella - Parque de la Alameda 10.jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:Marbella%20-%20Parque%20de%20la%20Alameda%2010.jpg"
+    }
+  ]
+}

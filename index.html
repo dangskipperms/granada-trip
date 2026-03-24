@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Costa del Sol — Avril 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,500;1,300&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0e0e0e;--card:#151515;--border:#222;--t:#bbb;--td:#666;--tb:#ddd;--tm:#444}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--t);font-family:'DM Sans',sans-serif;font-weight:300;font-size:13px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.page{max-width:860px;margin:0 auto;padding:40px 16px 80px}
+header{display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px;margin-bottom:16px;padding:12px 0;border-bottom:1px solid var(--border)}
+header h1{font-family:'Cormorant Garamond',serif;font-weight:300;font-size:22px;color:var(--tb);letter-spacing:-0.5px;white-space:nowrap}
+header p{font-size:11px;color:var(--td)}
+
+/* Compact card */
+.c{background:var(--card);border:1px solid var(--border);border-radius:5px;margin-bottom:20px;overflow:hidden}
+
+/* Photo strip */
+.ph{display:flex;gap:1px;overflow-x:auto;cursor:grab;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.ph::-webkit-scrollbar{display:none}
+.ph img{height:90px;flex-shrink:0;display:block;opacity:.88;transition:opacity .15s;cursor:pointer}
+.ph img:hover{opacity:1}
+
+/* Card body */
+.cb{padding:14px 16px 16px;display:grid;grid-template-columns:1fr auto;gap:4px 16px}
+.cb h2{font-family:'Cormorant Garamond',serif;font-weight:500;font-size:17px;color:var(--tb);grid-column:1;line-height:1.2}
+.cb h2 a{color:inherit;text-decoration:none;border-bottom:1px solid var(--border);transition:border-color .2s}
+.cb h2 a:hover{border-color:var(--td)}
+.pr{font-family:'Cormorant Garamond',serif;font-weight:500;font-size:18px;color:var(--tb);text-align:right;white-space:nowrap;grid-row:1/3}
+.pr small{font-weight:300;font-size:10px;color:var(--td);display:block}
+.mt{font-size:11px;color:var(--td);grid-column:1}
+.tg{display:flex;flex-wrap:wrap;gap:4px;grid-column:1/-1;margin-top:6px}
+.tg span{font-size:9px;font-weight:500;text-transform:uppercase;letter-spacing:.8px;padding:3px 7px;border:1px solid var(--border);border-radius:2px;color:var(--td)}
+.qt{grid-column:1/-1;margin-top:8px;padding:8px 12px;background:rgba(255,255,255,.04);border-left:2px solid #555;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:13px;color:#aaa;line-height:1.5}
+.lk{grid-column:1/-1;text-align:right;margin-top:6px}
+.lk a{font-size:10px;color:var(--tm);text-decoration:none;letter-spacing:.5px;text-transform:uppercase;font-weight:500;transition:color .2s}
+.lk a:hover{color:var(--t)}
+
+/* Lightbox */
+.lb{display:none;position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:1000;align-items:center;justify-content:center;flex-direction:column}
+.lb.open{display:flex}
+.lb img{max-height:80vh;max-width:92vw;object-fit:contain;border-radius:4px}
+.lb .nav{position:absolute;top:50%;transform:translateY(-50%);font-size:36px;color:#555;cursor:pointer;padding:20px;user-select:none;transition:color .2s}
+.lb .nav:hover{color:#aaa}
+.lb .prev{left:8px}
+.lb .next{right:8px}
+.lb .close{position:absolute;top:16px;right:20px;font-size:24px;color:#555;cursor:pointer;transition:color .2s}
+.lb .close:hover{color:#aaa}
+.lb .counter{color:#444;font-size:12px;margin-top:12px;font-family:'DM Sans',sans-serif}
+.lb .thumbstrip{display:flex;gap:2px;overflow-x:auto;margin-top:12px;max-width:90vw;scrollbar-width:none}
+.lb .thumbstrip::-webkit-scrollbar{display:none}
+.lb .thumbstrip img{height:40px;cursor:pointer;opacity:.4;transition:opacity .15s;flex-shrink:0}
+.lb .thumbstrip img.active,.lb .thumbstrip img:hover{opacity:1}
+
+footer{text-align:center;padding-top:32px;border-top:1px solid var(--border);color:var(--tm);font-size:11px}
+
+/* Common features */
+.common{font-size:11px;color:#888;text-align:center;margin-bottom:10px;font-style:italic}
+
+/* Comparison table */
+.comp-wrap{overflow-x:auto;margin-bottom:28px;scrollbar-width:thin;scrollbar-color:#333 transparent}
+.comp{width:100%;border-collapse:collapse;font-size:11px;white-space:nowrap}
+.comp th{font-family:'Cormorant Garamond',serif;font-weight:500;font-size:13px;color:var(--tb);padding:8px 10px;border-bottom:1px solid var(--border);text-align:center;position:sticky;top:0;background:var(--bg)}
+.comp td{padding:5px 10px;text-align:center;border-bottom:1px solid #1a1a1a;color:var(--td)}
+.comp td.label{text-align:right;color:var(--t);font-weight:400;padding-right:14px}
+.comp td.y{color:var(--tb)}
+.comp tr:hover td{background:#1a1a1a}
+
+/* Notre avis */
+.avis{background:var(--card);border:1px solid var(--border);border-radius:5px;padding:20px 24px;margin-bottom:28px}
+.avis h2{font-family:'Cormorant Garamond',serif;font-weight:500;font-size:18px;color:var(--tb);margin-bottom:12px}
+.avis p{font-size:13px;color:var(--td);line-height:1.7;margin-bottom:10px}
+.avis p:last-child{margin-bottom:0}
+.avis strong{color:var(--tb);font-weight:500}
+
+/* Vote button */
+.vote-btn{display:inline-flex;align-items:center;gap:5px;background:none;border:1px solid var(--border);color:var(--td);font-family:'DM Sans',sans-serif;font-size:11px;padding:5px 12px;border-radius:14px;cursor:pointer;transition:all .2s;margin-top:8px}
+.vote-btn:hover{border-color:var(--td);color:var(--t)}
+.vote-btn.voted{border-color:#e74c3c;color:#e74c3c}
+.vote-btn .heart{font-size:14px;transition:transform .2s}
+.vote-btn.voted .heart{transform:scale(1.2)}
+.vote-tally{display:inline-block;margin-left:8px;font-size:10px;color:var(--tm)}
+
+/* Map toggle */
+.toggle-bar{display:flex;justify-content:center;gap:8px;margin-bottom:24px}
+.toggle-bar button{background:var(--card);border:1px solid var(--border);color:var(--td);font-family:'DM Sans',sans-serif;font-size:11px;font-weight:500;padding:6px 18px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:.8px;transition:all .2s}
+.toggle-bar button.active{color:var(--tb);border-color:var(--td)}
+.toggle-bar button:hover{color:var(--t)}
+
+/* Map */
+#map-wrap{display:none;margin-bottom:24px}
+#map{height:500px;border-radius:5px;border:1px solid var(--border)}
+#map-wrap.visible{display:block}
+.listings-wrap.hidden{display:none}
+#table-wrap{display:none}
+#table-wrap.visible{display:block}
+.comp th.clickable{cursor:pointer;transition:color .2s}
+.comp th.clickable:hover{color:#fff;text-decoration:underline}
+
+/* Map markers */
+.mk{display:flex;align-items:center;justify-content:center;border-radius:50%;box-shadow:0 2px 8px rgba(0,0,0,.35);border:2.5px solid #fff;transition:transform .15s ease;cursor:pointer}
+.mk:hover{transform:scale(1.2)}
+.mk-listing{width:36px;height:36px;background:#fff;color:#222;font-family:'DM Sans',sans-serif;font-weight:700;font-size:14px}
+.mk-poi{width:22px;height:22px;background:#2980b9;font-size:11px;line-height:1;border-width:1.5px}
+.mk-airport{width:28px;height:28px;background:#e67e22;font-size:14px;line-height:1;border-width:2px}
+.mk-shop{width:18px;height:18px;background:#27ae60;font-size:9px;line-height:1;border-width:1.5px}
+
+/* Leaflet popup override — light popups for readability */
+.leaflet-popup-content-wrapper{background:#fff;color:#333;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.25);font-family:'DM Sans',sans-serif;font-size:13px}
+.leaflet-popup-tip{background:#fff}
+.leaflet-popup-content{margin:12px 16px}
+.leaflet-popup-content a{color:#2980b9;text-decoration:none}
+.leaflet-popup-content a:hover{text-decoration:underline}
+.leaflet-popup-content .pop-title{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:500;color:#222;margin-bottom:4px}
+.leaflet-popup-content .pop-price{font-family:'Cormorant Garamond',serif;font-size:15px;color:#e74c3c;font-weight:500}
+.leaflet-popup-content .pop-meta{font-size:11px;color:#888;margin-top:4px}
+.leaflet-popup-content .pop-desc{font-size:12px;color:#555;margin-top:6px;line-height:1.6}
+.leaflet-popup-content .pop-link{display:inline-block;margin-top:8px;font-size:11px;color:#2980b9;font-weight:500}
+.leaflet-popup-close-button{color:#999;font-size:18px}
+.leaflet-popup-close-button:hover{color:#333}
+
+/* Popup slideshow */
+.pop-slides{position:relative;width:220px;height:150px;overflow:hidden;border-radius:6px;margin-top:8px;background:#eee}
+.pop-slides img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .3s}
+.pop-slides img.vis{opacity:1}
+.pop-slides .sl-btn{position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.45);color:#fff;border:none;font-size:18px;padding:2px 8px;cursor:pointer;border-radius:3px;z-index:2;line-height:1}
+.pop-slides .sl-btn:hover{background:rgba(0,0,0,.7)}
+.pop-slides .sl-prev{left:4px}
+.pop-slides .sl-next{right:4px}
+.pop-slides .sl-dots{position:absolute;bottom:6px;left:50%;transform:translateX(-50%);display:flex;gap:4px;z-index:2}
+.pop-slides .sl-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.4);transition:background .2s}
+.pop-slides .sl-dot.act{background:#fff}
+
+@media(max-width:600px){
+  .page{padding:16px 6px 48px}
+  header{flex-direction:column;gap:4px;text-align:center}
+  header h1{font-size:20px}
+  header p{font-size:10px}
+  .toggle-bar{gap:4px;margin-bottom:16px}
+  .toggle-bar button{padding:10px 16px;font-size:12px;min-height:44px}
+  .cb{grid-template-columns:1fr auto;gap:4px 12px;padding:12px 12px 14px}
+  .cb h2{font-size:16px}
+  .pr{font-size:16px}
+  .mt{font-size:12px;line-height:1.6}
+  .tg span{font-size:10px;padding:5px 9px}
+  .qt{font-size:13px;padding:10px 14px}
+  .lk a{font-size:12px;padding:8px 0;display:inline-block}
+  .ph img{height:80px}
+  .ph{-webkit-overflow-scrolling:touch}
+  #map{height:70vh}
+  .lb .nav{font-size:44px;padding:24px}
+  .lb .prev{left:2px}
+  .lb .next{right:2px}
+  .lb .close{font-size:32px;top:12px;right:12px;padding:8px}
+  .lb .counter{font-size:14px}
+  .lb .thumbstrip img{height:48px}
+  .lb img{max-height:70vh;max-width:96vw}
+  .comp{font-size:12px}
+  .comp th{font-size:13px;padding:10px 8px}
+  .comp td{padding:8px}
+  .common{font-size:12px}
+  .pop-slides{width:260px;height:180px}
+  .pop-slides .sl-btn{font-size:24px;padding:6px 12px}
+  .leaflet-popup-content .pop-title{font-size:16px}
+  .leaflet-popup-content .pop-desc{font-size:13px}
+  .leaflet-popup-close-button{font-size:24px;padding:4px 8px}
+  .mk-listing{width:40px;height:40px;font-size:16px}
+  .mk-poi{width:28px;height:28px;font-size:14px}
+  .mk-airport{width:34px;height:34px;font-size:18px}
+  .mk-shop{width:22px;height:22px;font-size:12px}
+}
+</style>
+</head>
+<body>
+<div class="page">
+<header>
+  <h1>Costa del Sol</h1>
+  <p>26&ndash;29 avril 2026 &middot; 5 adultes + 1 enfant (2 ans)</p>
+</header>
+
+<div class="toggle-bar">
+  <button id="btn-list" class="active" onclick="showView('list')">Liste</button>
+  <button id="btn-table" onclick="showView('table')">Tableau</button>
+  <button id="btn-map" onclick="showView('map')">Carte</button>
+</div>
+
+<div id="map-wrap"><div id="map"></div></div>
+
+<div id="table-wrap">
+<p class="common">Tous : 3 chambres, 2+ SDB, barbecue, chaise haute, lit bebe, climatisation &middot; 40-50 min de l'aeroport de Malaga</p>
+<div class="comp-wrap" id="comp-wrap">
+<table class="comp">
+<thead>
+<tr>
+  <th></th>
+  <th class="clickable" onclick="showView('list');scrollToCard('2_estepona')">Estepona<br>Plage</th>
+  <th class="clickable" onclick="showView('list');scrollToCard('10_new_golden_mile')">New Golden<br>Mile</th>
+  <th class="clickable" onclick="showView('list');scrollToCard('marine_essence')">Marine<br>Essence</th>
+  <th class="clickable" onclick="showView('list');scrollToCard('1_benahavis')">Benahav&iacute;s</th>
+</tr>
+</thead>
+<tbody>
+<tr><td class="label">Prix / 3 nuits</td><td>763&euro;</td><td>~550&euro;</td><td>494&euro;</td><td>630&euro;</td></tr>
+<tr><td class="label">Note</td><td>4.86</td><td>4.92</td><td>5.0</td><td>5.0</td></tr>
+<tr><td class="label">Avis</td><td>22</td><td>71</td><td>18</td><td>9</td></tr>
+<tr><td class="label">Capacite</td><td>6p</td><td>6p</td><td>8p</td><td>6p</td></tr>
+<tr><td class="label">Front de mer</td><td class="y">&check;</td><td class="y">&check;</td><td>&ndash;</td><td>&ndash;</td></tr>
+<tr><td class="label">Piscine</td><td>&ndash;</td><td class="y">&check;</td><td class="y">&check;</td><td class="y">proche</td></tr>
+<tr><td class="label">Cloture / portillon</td><td class="y">&check;</td><td class="y">&check;</td><td>&ndash;</td><td>&ndash;</td></tr>
+<tr><td class="label">Parking</td><td>garage x2</td><td>rue</td><td>&ndash;</td><td>garage</td></tr>
+</tbody>
+</table>
+</div>
+</div><!-- /table-wrap -->
+
+<div class="listings-wrap" id="listings-wrap">
+<p class="common">Tous : 3 chambres, 2+ SDB, barbecue, chaise haute, lit bebe, climatisation &middot; 40-50 min de l'aeroport de Malaga</p>
+
+<article class="c" data-folder="2_estepona" data-count="40">
+  <div class="ph"></div>
+  <div class="cb">
+    <h2><a href="https://www.airbnb.com/rooms/1121709879195362073?check_in=2026-04-26&check_out=2026-04-29&adults=5&infants=1" target="_blank">Maison de plage, Estepona</a></h2>
+    <div class="pr">763 &euro;<small>3 nuits</small></div>
+    <div class="mt">4.86 &#9733; (22) &middot; 4 SDB &middot; 6p &middot; Manuel</div>
+    <div class="tg"><span>cloture</span><span>garage x2</span></div>
+    <div class="qt">"Parfait pour des vacances en famille, face a la mer avec acces direct a la plage."</div>
+    <div class="lk"><a href="https://www.airbnb.com/rooms/1121709879195362073?check_in=2026-04-26&check_out=2026-04-29&adults=5&infants=1" target="_blank">Airbnb &rarr;</a></div>
+  </div>
+</article>
+
+<article class="c" data-folder="10_new_golden_mile" data-count="52">
+  <div class="ph"></div>
+  <div class="cb">
+    <h2><a href="https://www.airbnb.com/rooms/51708496?check_in=2026-04-26&check_out=2026-04-29&adults=5&infants=1" target="_blank">New Golden Mile</a></h2>
+    <div class="pr">~550 &euro;<small>3 nuits</small></div>
+    <div class="mt">4.92 &#9733; (71) &middot; 6p &middot; Ivan</div>
+    <div class="tg"><span>piscine</span><span>cloture + portillon</span></div>
+    <div class="qt">"Deux couples, deux bambins et un bebe de 4 mois &mdash; on s'est sentis a l'aise des l'arrivee. Portillon verrouillable, parfait pour les enfants."</div>
+    <div class="lk"><a href="https://www.airbnb.com/rooms/51708496?check_in=2026-04-26&check_out=2026-04-29&adults=5&infants=1" target="_blank">Airbnb &rarr;</a></div>
+  </div>
+</article>
+
+<article class="c" data-folder="marine_essence" data-count="15">
+  <div class="ph"></div>
+  <div class="cb">
+    <h2><a href="https://www.airbnb.com/rooms/1133051570926947124?check_in=2026-04-26&check_out=2026-04-29&adults=5&infants=1" target="_blank">Marine Essence, Estepona</a></h2>
+    <div class="pr">494 &euro;<small>3 nuits</small></div>
+    <div class="mt">5.0 &#9733; (18) &middot; 8p &middot; Carolina</div>
+    <div class="tg"><span>piscine</span><span>8 personnes</span></div>
+    <div class="qt">"Tres grand, joliment meuble, equipement moderne. Parfait."</div>
+    <div class="lk"><a href="https://www.airbnb.com/rooms/1133051570926947124?check_in=2026-04-26&check_out=2026-04-29&adults=5&infants=1" target="_blank">Airbnb &rarr;</a></div>
+  </div>
+</article>
+
+<article class="c" data-folder="1_benahavis" data-count="39">
+  <div class="ph"></div>
+  <div class="cb">
+    <h2><a href="https://www.airbnb.com/rooms/1334977026129344249?check_in=2026-04-26&check_out=2026-04-29&adults=5&infants=1" target="_blank">Appartement familial, Benahav&iacute;s</a></h2>
+    <div class="pr">630 &euro;<small>3 nuits</small></div>
+    <div class="mt">5.0 &#9733; (9) &middot; 6p &middot; Bianca &amp; Antonio</div>
+    <div class="tg"><span>aire de jeux</span><span>garage</span><span>piscine proche</span></div>
+    <div class="qt">"Exactement ce qu'il nous fallait avec deux enfants et deux grands-parents. Bianca propose les transferts aeroport."</div>
+    <div class="lk"><a href="https://www.airbnb.com/rooms/1334977026129344249?check_in=2026-04-26&check_out=2026-04-29&adults=5&infants=1" target="_blank">Airbnb &rarr;</a></div>
+  </div>
+</article>
+
+
+
+</div><!-- /listings-wrap -->
+
+<footer>
+  <p>Disponible du 26 au 29 avril 2026 &middot; Cliquer sur les photos pour agrandir &middot; Liens vers Airbnb</p>
+</footer>
+</div>
+
+<!-- Lightbox -->
+<div class="lb" id="lb">
+  <div class="close" onclick="closeLb()">&times;</div>
+  <div class="nav prev" onclick="navLb(-1)">&#8249;</div>
+  <div class="nav next" onclick="navLb(1)">&#8250;</div>
+  <img id="lb-img" src="">
+  <div class="counter" id="lb-counter"></div>
+  <div class="thumbstrip" id="lb-strip"></div>
+</div>
+
+<script>
+// Auto-populate photo strips from data attributes
+document.querySelectorAll('.c').forEach(card => {
+  const folder = card.dataset.folder;
+  const count = parseInt(card.dataset.count);
+  const strip = card.querySelector('.ph');
+  for (let i = 0; i < count; i++) {
+    const img = document.createElement('img');
+    img.src = `photos/thumbnails/${folder}/${String(i).padStart(2,'0')}.jpg`;
+    img.dataset.folder = folder;
+    img.dataset.index = i;
+    img.dataset.count = count;
+    img.onclick = () => openLb(folder, i, count);
+    strip.appendChild(img);
+  }
+});
+
+// Drag scroll (mouse + touch)
+document.querySelectorAll('.ph').forEach(el => {
+  let down=false,sx,sl,moved=false;
+  el.onmousedown = e => {down=true;moved=false;el.style.cursor='grabbing';sx=e.pageX-el.offsetLeft;sl=el.scrollLeft};
+  el.onmouseleave = el.onmouseup = () => {down=false;el.style.cursor='grab'};
+  el.onmousemove = e => {if(!down)return;e.preventDefault();moved=true;el.scrollLeft=sl-(e.pageX-el.offsetLeft-sx)};
+  // Prevent click after drag
+  el.addEventListener('click', e => { if(moved){e.stopPropagation();e.preventDefault()} }, true);
+});
+
+// Lightbox
+let lbFolder, lbIdx, lbCount;
+const lb = document.getElementById('lb');
+const lbImg = document.getElementById('lb-img');
+const lbCounter = document.getElementById('lb-counter');
+const lbStrip = document.getElementById('lb-strip');
+
+function openLb(folder, idx, count) {
+  lbFolder=folder; lbCount=count; lbIdx=idx;
+  lb.classList.add('open');
+  document.body.style.overflow='hidden';
+  // Build thumb strip
+  lbStrip.innerHTML='';
+  for(let i=0;i<count;i++){
+    const t=document.createElement('img');
+    t.src=`photos/thumbnails/${folder}/${String(i).padStart(2,'0')}.jpg`;
+    t.onclick=()=>goLb(i);
+    lbStrip.appendChild(t);
+  }
+  goLb(idx);
+}
+
+function goLb(i) {
+  lbIdx=i;
+  // Use Airbnb remote URLs for full-size, fall back to local
+  const remote = window.remotePhotos && window.remotePhotos[lbFolder];
+  lbImg.src = (remote && remote[i]) ? remote[i] : `photos/${lbFolder}/${String(i).padStart(2,'0')}.jpg`;
+  lbCounter.textContent=`${i+1} / ${lbCount}`;
+  lbStrip.querySelectorAll('img').forEach((t,j)=>t.classList.toggle('active',j===i));
+  // Scroll active thumb into view
+  const active=lbStrip.querySelector('.active');
+  if(active)active.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});
+}
+
+function navLb(dir) { goLb((lbIdx+dir+lbCount)%lbCount) }
+function closeLb() { lb.classList.remove('open'); document.body.style.overflow='' }
+
+// Keyboard nav
+document.onkeydown = e => {
+  if(!lb.classList.contains('open'))return;
+  if(e.key==='ArrowRight')navLb(1);
+  if(e.key==='ArrowLeft')navLb(-1);
+  if(e.key==='Escape')closeLb();
+};
+
+// Click backdrop to close
+lb.onclick = e => { if(e.target===lb)closeLb() };
+
+// Touch swipe for lightbox
+let touchStartX=0;
+lb.addEventListener('touchstart', e => { touchStartX=e.touches[0].clientX }, {passive:true});
+lb.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  if (Math.abs(dx) > 50) { dx > 0 ? navLb(-1) : navLb(1) }
+});
+
+// ===== MAP =====
+let map, mapReady = false;
+
+// Full-size photos loaded from Airbnb CDN (no local storage needed)
+window.remotePhotos = JSON.parse(document.getElementById('remote-photos-data').textContent);
+
+const listings = [
+  {id:'10_new_golden_mile', lat:36.46466, lng:-5.04567, name:'New Golden Mile', price:'~550\u20ac', meta:'3ch 2sdb 6p \u2022 4.92\u2605 (71)', folder:'10_new_golden_mile', count:52},
+  {id:'marine_essence', lat:36.4344, lng:-5.1429, name:'Marine Essence', price:'494\u20ac', meta:'3ch 2sdb 8p \u2022 5.0\u2605 (18)', folder:'marine_essence', count:15},
+  {id:'1_benahavis', lat:36.4831, lng:-5.0393, name:'Benahav\u00eds', price:'630\u20ac', meta:'3ch 2sdb 6p \u2022 5.0\u2605 (9)', folder:'1_benahavis', count:39},
+  {id:'2_estepona', lat:36.4608, lng:-5.0378, name:'Maison de plage, Estepona', price:'763\u20ac', meta:'3ch 4sdb 6p \u2022 4.86\u2605 (22)', folder:'2_estepona', count:40},
+];
+
+// Supermarkets near the listings
+const shops = [
+  {lat:36.4680, lng:-5.0410, name:'Mercadona Cancelada', desc:'New Golden Mile, a pied des residences', h:'Lun-Sam 9h-21h30', d:'Ferme dimanche'},
+  {lat:36.4720, lng:-4.9960, name:'Carrefour Guadalmina', desc:'Grand hypermarche, parking', h:'Lun-Sam 9h-22h', d:'Dim 10h-14h (saison)'},
+  {lat:36.4330, lng:-5.1500, name:'Mercadona Estepona', desc:'Av. Andalucia, centre-ville', h:'Lun-Sam 9h-21h30', d:'Ferme dimanche'},
+  {lat:36.4380, lng:-5.1330, name:'Lidl Estepona', desc:'Av. del Mar', h:'Lun-Sam 9h-21h30', d:'Ferme dimanche'},
+  {lat:36.4490, lng:-5.1080, name:'Carrefour Estepona', desc:'A7, tres grand hypermarche', h:'Lun-Sam 9h-22h', d:'Dim 10h-14h (saison)'},
+  {lat:36.4810, lng:-4.9640, name:'Mercadona San Pedro', desc:'Parking multi-etages', h:'Lun-Sam 9h-21h30', d:'Ferme dimanche'},
+];
+
+const pois = [
+  {lat:36.6749, lng:-4.4991, name:'Aeroport de Malaga (AGP)', icon:'airport',
+   desc:'Vols directs depuis Barcelone (Vueling, Ryanair). 1h45 de vol. Location de voiture sur place.',
+   photos:[]},
+  {lat:36.5101, lng:-4.8826, name:'Vieille ville de Marbella', icon:'poi',
+   desc:'Plaza de los Naranjos, ruelles fleuries, restaurants de tapas. Le coeur historique, loin du bling de Puerto Banus. Parfait pour une balade en fin de journee.',
+   photos:['photos/poi/marbella/00.jpg','photos/poi/marbella/01.jpg','photos/poi/marbella/02.jpg','photos/poi/marbella/03.jpg','photos/poi/marbella/04.jpg','photos/poi/marbella/05.jpg','photos/poi/marbella/06.jpg','photos/poi/marbella/07.jpg','photos/poi/marbella/08.jpg','photos/poi/marbella/09.jpg']},
+  {lat:36.4858, lng:-4.9543, name:'Puerto Ban\u00fas', icon:'poi',
+   desc:'Le port de luxe : yachts, boutiques, restaurants en bord de mer. Ambiance animee le soir. Promenade agreable meme si on n\'achete rien.',
+   photos:['photos/poi/puerto_banus/00.jpg','photos/poi/puerto_banus/01.jpg','photos/poi/puerto_banus/02.jpg','photos/poi/puerto_banus/03.jpg','photos/poi/puerto_banus/04.jpg','photos/poi/puerto_banus/05.jpg','photos/poi/puerto_banus/06.jpg','photos/poi/puerto_banus/07.jpg','photos/poi/puerto_banus/08.jpg','photos/poi/puerto_banus/09.jpg']},
+  {lat:36.5952, lng:-4.6361, name:'Mijas Pueblo', icon:'poi',
+   desc:'Village blanc perche dans les collines, 30 min de la cote. Anes-taxis, vues panoramiques sur la Mediterranee, ceramiques artisanales. Les enfants adorent.',
+   photos:['photos/poi/mijas/00.jpg','photos/poi/mijas/01.jpg','photos/poi/mijas/02.jpg','photos/poi/mijas/03.jpg','photos/poi/mijas/04.jpg','photos/poi/mijas/05.jpg','photos/poi/mijas/06.jpg','photos/poi/mijas/07.jpg','photos/poi/mijas/08.jpg','photos/poi/mijas/09.jpg']},
+  {lat:36.7462, lng:-5.1662, name:'Ronda', icon:'poi',
+   desc:'Ville spectaculaire sur une falaise, pont Puente Nuevo au-dessus d\'un gouffre de 100m. A 1h30 de route mais inoubliable. Possible en excursion d\'une journee.',
+   photos:['photos/poi/ronda/00.jpg','photos/poi/ronda/01.jpg','photos/poi/ronda/02.jpg','photos/poi/ronda/03.jpg','photos/poi/ronda/04.jpg','photos/poi/ronda/05.jpg','photos/poi/ronda/06.jpg','photos/poi/ronda/07.jpg','photos/poi/ronda/08.jpg','photos/poi/ronda/09.jpg']},
+  {lat:36.7144, lng:-4.4256, name:'Centre-ville de Malaga', icon:'poi',
+   desc:'Musee Picasso (ne ici), Alcazaba maure, marche central d\'Atarazanas. Ville vivante et culturelle, 20 min de l\'aeroport.',
+   photos:['photos/poi/malaga/00.jpg','photos/poi/malaga/01.jpg','photos/poi/malaga/02.jpg','photos/poi/malaga/03.jpg','photos/poi/malaga/04.jpg','photos/poi/malaga/05.jpg','photos/poi/malaga/06.jpg','photos/poi/malaga/07.jpg','photos/poi/malaga/08.jpg','photos/poi/malaga/09.jpg']},
+  {lat:36.4746, lng:-5.0690, name:'Playa de Guadalmina', icon:'poi',
+   desc:'Grande plage de sable fin entre San Pedro et Estepona. Eau peu profonde, ideale pour les tout-petits. Chiringuitos sur place.',
+   photos:['photos/poi/guadalmina/00.jpg','photos/poi/guadalmina/01.jpg','photos/poi/guadalmina/02.jpg','photos/poi/guadalmina/03.jpg','photos/poi/guadalmina/04.jpg']},
+  {lat:36.5131, lng:-4.8460, name:'Parc de la Alameda', icon:'poi',
+   desc:'Jardin botanique au centre de Marbella. Bancs a l\'ombre, fontaines, plantes tropicales. Pause agreable avec un enfant.',
+   photos:['photos/poi/alameda/00.jpg','photos/poi/alameda/01.jpg','photos/poi/alameda/02.jpg','photos/poi/alameda/03.jpg','photos/poi/alameda/04.jpg','photos/poi/alameda/05.jpg','photos/poi/alameda/06.jpg','photos/poi/alameda/07.jpg','photos/poi/alameda/08.jpg','photos/poi/alameda/09.jpg']},
+];
+
+function initMap() {
+  if (mapReady) return;
+  map = L.map('map',{zoomControl:true}).setView([36.52,-4.85],10);
+
+  // Map tiles (CARTO Voyager — colorful, no referer restrictions)
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{
+    attribution:'OpenStreetMap &middot; CARTO',
+    maxZoom:19,
+    subdomains:'abcd'
+  }).addTo(map);
+
+  // Scale bar
+  L.control.scale({metric:true, imperial:false, position:'bottomleft'}).addTo(map);
+
+  // Listing markers (numbered circles)
+  listings.forEach((l,idx) => {
+    const marker = L.marker([l.lat,l.lng],{
+      icon: L.divIcon({
+        className:'',
+        html:`<div class="mk mk-listing">${idx+1}</div>`,
+        iconSize:[36,36],
+        iconAnchor:[18,18]
+      })
+    }).addTo(map);
+
+    // Build slideshow HTML (first 8 photos)
+    const slideCount = Math.min(l.count || 8, 8);
+    const sid = `sl-${l.id}`;
+    let slidesHtml = `<div class="pop-slides" id="${sid}">`;
+    for(let i=0;i<slideCount;i++){
+      slidesHtml += `<img src="photos/${l.folder}/${String(i).padStart(2,'0')}.jpg" class="${i===0?'vis':''}">`;
+    }
+    slidesHtml += `<button class="sl-btn sl-prev" onclick="popSlide('${sid}',-1)">\u2039</button>`;
+    slidesHtml += `<button class="sl-btn sl-next" onclick="popSlide('${sid}',1)">\u203A</button>`;
+    slidesHtml += `<div class="sl-dots">`;
+    for(let i=0;i<slideCount;i++) slidesHtml += `<div class="sl-dot${i===0?' act':''}"></div>`;
+    slidesHtml += `</div></div>`;
+
+    marker.bindPopup(`
+      <div class="pop-title">${l.name}</div>
+      <div class="pop-price">${l.price} / 3 nuits</div>
+      <div class="pop-meta">${l.meta}</div>
+      ${slidesHtml}
+      <a class="pop-link" href="#" onclick="scrollToCard('${l.id}');return false">Voir les details \u2193</a>
+    `, {maxWidth:250, minWidth:240});
+  });
+
+  // Airport marker (triangle-ish)
+  const ap = pois[0];
+  L.marker([ap.lat,ap.lng],{
+    icon: L.divIcon({
+      className:'',
+      html:'<div class="mk mk-airport">\u2708\uFE0F</div>',
+      iconSize:[28,28],
+      iconAnchor:[14,14]
+    })
+  }).addTo(map).bindPopup(`
+    <div class="pop-title">${ap.name}</div>
+    <div class="pop-desc">${ap.desc}</div>
+  `, {maxWidth:250});
+
+  // POI markers with emojis
+  const poiEmojis = {
+    'Vieille ville de Marbella': '\uD83C\uDFF0',
+    'Puerto Ban\u00fas': '\u26F5',
+    'Mijas Pueblo': '\uD83D\uDC34',
+    'Ronda': '\uD83C\uDF09',
+    'Centre-ville de Malaga': '\uD83C\uDFA8',
+    'Playa de Guadalmina': '\uD83C\uDFD6\uFE0F',
+    'Parc de la Alameda': '\uD83C\uDF34',
+  };
+  pois.slice(1).forEach((p,pi) => {
+    const emoji = poiEmojis[p.name] || '\u2B50';
+    const marker = L.marker([p.lat,p.lng],{
+      icon: L.divIcon({
+        className:'',
+        html:`<div class="mk mk-poi">${emoji}</div>`,
+        iconSize:[22,22],
+        iconAnchor:[11,11]
+      })
+    }).addTo(map);
+
+    let slidesHtml = '';
+    if (p.photos && p.photos.length > 0) {
+      const sid = 'poi-sl-' + pi;
+      slidesHtml = `<div class="pop-slides" id="${sid}">`;
+      p.photos.forEach((url,i) => {
+        slidesHtml += `<img src="${url}" class="${i===0?'vis':''}">`;
+      });
+      slidesHtml += `<button class="sl-btn sl-prev" onclick="popSlide('${sid}',-1)">\u2039</button>`;
+      slidesHtml += `<button class="sl-btn sl-next" onclick="popSlide('${sid}',1)">\u203A</button>`;
+      slidesHtml += `<div class="sl-dots">`;
+      p.photos.forEach((_,i) => { slidesHtml += `<div class="sl-dot${i===0?' act':''}"></div>`; });
+      slidesHtml += '</div></div>';
+    }
+
+    marker.bindPopup(`
+      <div class="pop-title">${p.name}</div>
+      ${slidesHtml}
+      <div class="pop-desc">${p.desc}</div>
+    `, {maxWidth:260, minWidth:240});
+  });
+
+  // Supermarket markers
+  shops.forEach(s => {
+    L.marker([s.lat,s.lng],{
+      icon: L.divIcon({
+        className:'',
+        html:'<div class="mk mk-shop">\uD83D\uDED2</div>',
+        iconSize:[18,18],
+        iconAnchor:[9,9]
+      })
+    }).addTo(map).bindPopup(`
+      <div class="pop-title" style="font-size:14px">${s.name}</div>
+      <div class="pop-desc" style="margin:4px 0">${s.desc}</div>
+      <div style="font-size:11px;color:#333;line-height:1.6"><b>\u{1F552}</b> ${s.h}<br><b>\u{1F4C5}</b> ${s.d}</div>
+    `, {maxWidth:220});
+  });
+
+  mapReady = true;
+  setTimeout(() => map.invalidateSize(), 100);
+}
+
+function showView(view) {
+  document.getElementById('map-wrap').classList.remove('visible');
+  document.getElementById('listings-wrap').classList.add('hidden');
+  document.getElementById('table-wrap').classList.remove('visible');
+  document.getElementById('btn-list').classList.remove('active');
+  document.getElementById('btn-table').classList.remove('active');
+  document.getElementById('btn-map').classList.remove('active');
+
+  if (view === 'list') {
+    document.getElementById('listings-wrap').classList.remove('hidden');
+    document.getElementById('btn-list').classList.add('active');
+  } else if (view === 'table') {
+    document.getElementById('table-wrap').classList.add('visible');
+    document.getElementById('btn-table').classList.add('active');
+  } else if (view === 'map') {
+    document.getElementById('map-wrap').classList.add('visible');
+    document.getElementById('btn-map').classList.add('active');
+    initMap();
+    setTimeout(() => map.invalidateSize(), 150);
+  }
+}
+
+// Popup slideshow navigation
+function popSlide(sid, dir) {
+  const wrap = document.getElementById(sid);
+  if (!wrap) return;
+  const imgs = wrap.querySelectorAll('img');
+  const dots = wrap.querySelectorAll('.sl-dot');
+  let cur = 0;
+  imgs.forEach((img,i) => { if (img.classList.contains('vis')) cur = i; });
+  imgs[cur].classList.remove('vis');
+  dots[cur].classList.remove('act');
+  cur = (cur + dir + imgs.length) % imgs.length;
+  imgs[cur].classList.add('vis');
+  dots[cur].classList.add('act');
+}
+
+// Touch swipe on popup slideshows (delegated — works for dynamically created popups)
+document.addEventListener('touchstart', e => {
+  const sl = e.target.closest('.pop-slides');
+  if (sl) sl._touchX = e.touches[0].clientX;
+}, {passive:true});
+document.addEventListener('touchend', e => {
+  const sl = e.target.closest('.pop-slides');
+  if (sl && sl._touchX !== undefined) {
+    const dx = e.changedTouches[0].clientX - sl._touchX;
+    if (Math.abs(dx) > 40) popSlide(sl.id, dx > 0 ? -1 : 1);
+    delete sl._touchX;
+  }
+});
+
+function scrollToCard(folderId) {
+  showView('list');
+  const card = document.querySelector(`[data-folder="${folderId}"]`);
+  if (card) {
+    setTimeout(() => {
+      card.scrollIntoView({behavior:'smooth', block:'center'});
+      card.style.borderColor='#555';
+      setTimeout(() => card.style.borderColor='', 2000);
+    }, 200);
+  }
+}
+</script>
+<script type="application/json" id="remote-photos-data">{"2_estepona": ["https://a0.muscache.com/im/pictures/prohost-api/Hosting-1121709879195362073/original/050e2ce2-348b-422a-8cc8-bdefd0e18957.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1121709879195362073/original/70a69d05-d6de-4b89-8536-56c65fd6c97a.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1121709879195362073/original/57fadb4c-b256-43dc-b511-52270f5db85b.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1121709879195362073/original/42c4d881-2f9e-4b0d-a2f2-fa9ab2233592.jpeg", "https://a0.muscache.com/im/pictures/hosting/Hosting-1121709879195362073/original/54ad40ab-a6ae-4470-8add-14cc34f5890c.jpeg", "https://a0.muscache.com/im/pictures/hosting/Hosting-1121709879195362073/original/01475d48-2058-47ce-a24f-923234d09973.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1121709879195362073/original/65ece4b0-1e5b-4182-90d5-9c22f969e52a.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1121709879195362073/original/be75b852-0255-4204-af08-04cf0243436b.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1121709879195362073/original/1f5cd3f5-478b-4ba6-80a4-18d45ae3a4f7.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1121709879195362073/original/19eae6f9-e9b8-459a-b207-c2be5a1b040a.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1121709879195362073/original/8e699855-bfef-4e5a-8092-8eb84689afcb.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1121709879195362073/original/a35e7950-1a72-47a5-84b1-421cebeb73a8.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1121709879195362073/original/eeaed972-23cd-45f6-b3c0-205817d02bda.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1121709879195362073/original/6a17af49-2c0b-4354-b427-31295f37d1d6.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1121709879195362073/original/436e8183-2cc8-4271-af74-976b5ecb1a53.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1121709879195362073/original/2766ec81-a545-4565-a403-0154be089768.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1121709879195362073/original/fc6eec47-c1fd-4b4a-8400-3d0cab10b4a1.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1121709879195362073/original/5dd4c2cb-3421-42f6-bc54-d203cc8a55e2.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1121709879195362073/original/90419cc4-4f8f-4a21-a40f-40cbf289cd83.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1121709879195362073/original/6d1fd982-cb19-424d-8726-9eb137a71937.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1121709879195362073/original/476368b3-08da-43d6-8dd5-5b45f24a3ef5.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1121709879195362073/original/6c395d6f-0185-421a-b178-455d348221f5.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1121709879195362073/original/e3dfba4f-acea-4e31-b727-cd99e7411f26.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1121709879195362073/original/b8e4e475-189a-42b2-9e80-1e61adba70d4.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1121709879195362073/original/8ae3e8b6-87a7-46de-bb75-b50c75858956.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1121709879195362073/original/fc1cba6b-6d53-4740-b7f1-bed310c063f5.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1121709879195362073/original/5b894fef-400a-4a6f-b3ca-a4c36668861f.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1121709879195362073/original/de1adcf8-4a8c-473d-8420-f6e649cfc1ad.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1121709879195362073/original/def01754-b871-491f-8417-e08ffdd7b475.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1121709879195362073/original/8ab527c0-d361-4c98-bf05-28efd5d0da04.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1121709879195362073/original/8d9730d1-95b6-40cf-be04-68fc1183f6e1.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1121709879195362073/original/4dec04db-0b3c-4cab-aa30-cd2e8d6d92cb.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1121709879195362073/original/fbdae71c-d0cf-4342-a472-ea78a6f0f160.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1121709879195362073/original/fa4e9f89-c32c-4915-99fa-585d1eaca64c.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1121709879195362073/original/5e5ae513-97c4-4867-81e9-4e70324592ef.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1121709879195362073/original/1b3e04b6-7b52-47fc-af8c-989d8687b2fb.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1121709879195362073/original/2e9cc8b9-0e33-4e44-9a6e-5ed67f15b85b.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1121709879195362073/original/21052c6d-adb9-4772-bf70-20ba159f6b49.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1121709879195362073/original/858e8680-3a01-4ae1-9fb5-5e4e66d4d0a6.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1121709879195362073/original/1ebdbf36-ea93-4e52-a4a1-eb1b56998fac.jpeg"], "10_new_golden_mile": ["https://a0.muscache.com/im/pictures/21136471-ac00-407a-8eed-d0c7656c067a.jpg", "https://a0.muscache.com/im/pictures/41dcfd94-2999-408b-a9d1-ee7d430fb725.jpg", "https://a0.muscache.com/im/pictures/miso/Hosting-51708496/original/ae59f5ae-4aad-4262-a397-0ca8b255c0bb.jpeg", "https://a0.muscache.com/im/pictures/miso/Hosting-51708496/original/5113921f-8c1c-4a6f-9fb4-e55ef6aea22a.jpeg", "https://a0.muscache.com/im/pictures/dc97f294-3a70-4328-bc0d-63885653e7ac.jpg", "https://a0.muscache.com/im/pictures/dd381e8b-bd95-4720-ae98-576e87f9ccc0.jpg", "https://a0.muscache.com/im/pictures/miso/Hosting-51708496/original/64c65b3d-a389-4949-b4a8-3488478efe79.jpeg", "https://a0.muscache.com/im/pictures/7a35bd79-e465-4461-8f9f-20ed82a1ac5b.jpg", "https://a0.muscache.com/im/pictures/miso/Hosting-51708496/original/137bb2d2-c23d-48b4-ad6d-a0401e398583.jpeg", "https://a0.muscache.com/im/pictures/miso/Hosting-51708496/original/394e47a1-0391-4f9e-a490-a496b2b516b3.jpeg", "https://a0.muscache.com/im/pictures/miso/Hosting-51708496/original/2ab874b9-245d-47b8-a382-ab7af1ed3c78.jpeg", "https://a0.muscache.com/im/pictures/miso/Hosting-51708496/original/05890b6a-89cf-4b4e-9833-c0a9fae8802c.jpeg", "https://a0.muscache.com/im/pictures/b39bbc56-6897-4a01-89ec-50f18eb6d3dd.jpg", "https://a0.muscache.com/im/pictures/acfe543f-1e79-4b43-811a-4a03856311df.jpg", "https://a0.muscache.com/im/pictures/ec548a35-1070-4c6c-ade4-2a9ee250dec9.jpg", "https://a0.muscache.com/im/pictures/miso/Hosting-51708496/original/9c081ac3-1873-466c-9038-a50f64bfe1f9.jpeg", "https://a0.muscache.com/im/pictures/miso/Hosting-51708496/original/d44ece24-b2b9-4fc6-9ec7-62400b7344be.jpeg", "https://a0.muscache.com/im/pictures/miso/Hosting-51708496/original/7d4fde97-7d80-4f62-9e5e-e219cd5bd281.jpeg", "https://a0.muscache.com/im/pictures/miso/Hosting-51708496/original/7d4cf0f6-2087-464b-a0e1-1402568ba2b9.jpeg", "https://a0.muscache.com/im/pictures/4ce19524-a9db-451a-b8fe-70945e5e9038.jpg", "https://a0.muscache.com/im/pictures/7bec30c4-a324-4c60-91c8-19197d3d0f35.jpg", "https://a0.muscache.com/im/pictures/7ca66fa2-0b19-4078-9d71-994f5d061e17.jpg", "https://a0.muscache.com/im/pictures/778682f2-258f-4103-9773-329ccf01d2c5.jpg", "https://a0.muscache.com/im/pictures/miso/Hosting-51708496/original/cc38e6e0-35be-447e-9ecb-e5f013e76eb6.jpeg", "https://a0.muscache.com/im/pictures/miso/Hosting-51708496/original/71e53eea-34d6-401c-a343-a349a523ba43.jpeg", "https://a0.muscache.com/im/pictures/miso/Hosting-51708496/original/e52342bb-f48a-4068-88f7-d7bb56d2a0dc.jpeg", "https://a0.muscache.com/im/pictures/miso/Hosting-51708496/original/b197c04b-9947-4b84-b7d2-fe5668d5649c.jpeg", "https://a0.muscache.com/im/pictures/3b361675-c540-43cf-a64e-53551b919c18.jpg", "https://a0.muscache.com/im/pictures/f902966f-c7e8-4a83-a07f-d0d924998f11.jpg", "https://a0.muscache.com/im/pictures/4c0021db-d085-408f-be1d-643851e52037.jpg", "https://a0.muscache.com/im/pictures/bd77d5fc-e823-4425-abd3-8412623b8afb.jpg", "https://a0.muscache.com/im/pictures/b6ad9ebd-a02d-420b-95f0-23a863699f7e.jpg", "https://a0.muscache.com/im/pictures/fc702280-f89b-47f1-a7ef-d305ed6fb931.jpg", "https://a0.muscache.com/im/pictures/3f3e70bb-65ea-48eb-a413-f045d885cb25.jpg", "https://a0.muscache.com/im/pictures/a8f17fb2-cbe3-4174-a211-604d3629b995.jpg", "https://a0.muscache.com/im/pictures/miso/Hosting-51708496/original/ac5483da-cca6-4a63-9081-e93311714145.jpeg", "https://a0.muscache.com/im/pictures/1e1a0a34-8507-4376-a4cd-b0f12dbf4de1.jpg", "https://a0.muscache.com/im/pictures/miso/Hosting-51708496/original/04d358e3-c64f-47ba-b64d-c2e4a7534af8.jpeg", "https://a0.muscache.com/im/pictures/hosting/Hosting-U3RheVN1cHBseUxpc3Rpbmc6NTE3MDg0OTY%3D/original/89e22da4-3914-4b82-83cf-8a71f938f138.jpeg", "https://a0.muscache.com/im/pictures/hosting/Hosting-U3RheVN1cHBseUxpc3Rpbmc6NTE3MDg0OTY%3D/original/523fd4d3-3f3d-4b3c-bed8-f8c103209f04.png", "https://a0.muscache.com/im/pictures/miso/Hosting-51708496/original/2c5f1ea7-652a-4879-835a-0774aebfa3b4.jpeg", "https://a0.muscache.com/im/pictures/miso/Hosting-51708496/original/86cc7ca7-9d10-42bf-a3be-5d808bc394c7.jpeg", "https://a0.muscache.com/im/pictures/9746dee0-2e0a-465d-a05e-1aed53024eee.jpg", "https://a0.muscache.com/im/pictures/216f245e-cb1c-4524-907a-6a022b52bdc8.jpg", "https://a0.muscache.com/im/pictures/ba8af061-2e5d-46f4-8000-d34c867d95c6.jpg", "https://a0.muscache.com/im/pictures/79711e2e-3b3a-4fc8-a14f-1a991aaa2a81.jpg", "https://a0.muscache.com/im/pictures/508d609d-ae24-48f4-a39f-bd1107d2ac61.jpg", "https://a0.muscache.com/im/pictures/a9cc6a95-a84c-4d0d-aae4-ad13a010b730.jpg", "https://a0.muscache.com/im/pictures/miso/Hosting-51708496/original/bc92a87c-77d6-478f-9036-7901299e3340.jpeg", "https://a0.muscache.com/im/pictures/miso/Hosting-51708496/original/a8ffbb2b-e556-49c9-bc2e-7cd686095837.jpeg", "https://a0.muscache.com/im/pictures/miso/Hosting-51708496/original/f2dc20a7-0e42-4e62-8d56-502514e8cb2b.jpeg", "https://a0.muscache.com/im/pictures/miso/Hosting-51708496/original/1b95b6eb-9f71-4111-9cf4-f225011092b4.jpeg"], "marine_essence": ["https://a0.muscache.com/im/pictures/prohost-api/Hosting-1133051570926947124/original/626156a2-90d4-4933-9707-91786bf28c94.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1133051570926947124/original/139429cc-033e-4242-af90-5d6a58b4b2b6.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1133051570926947124/original/cd5c5162-872a-420c-af09-a4785effabd1.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1133051570926947124/original/5648aa93-e136-4c42-8d33-a88d4323baac.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1133051570926947124/original/8e1df293-ea84-4ed5-91cb-2daa396bffe0.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1133051570926947124/original/359835cb-5d95-4a0b-acd2-40a7c7679d1a.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1133051570926947124/original/250a451a-877c-4310-a71a-527e08ad47c5.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1133051570926947124/original/920f0de4-46dd-4b65-bc96-6de54141ca03.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1133051570926947124/original/430d6846-c271-47f5-a40a-6010d4fa2495.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1133051570926947124/original/c1e3f158-ea94-4497-83dc-dee013f026fd.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1133051570926947124/original/8e47edfa-be4d-4a25-9a1c-5389f5cdcd1a.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1133051570926947124/original/3e81a9de-9f7e-4293-a165-8ef4281501b7.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1133051570926947124/original/ef9d545d-dc16-4ec8-b4fa-3dbd63e4a08d.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1133051570926947124/original/64647237-7391-4139-9947-f2939a487361.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1133051570926947124/original/9644a05b-90b1-4b1b-a14d-dae41fc61c48.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1133051570926947124/original/7f489a2a-aca7-4466-acf0-fdd29168a8ef.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1133051570926947124/original/68b1daf3-dd7d-41fc-a3ef-76ead1002e5f.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1133051570926947124/original/e2cdace3-d1b0-44f6-9fd9-b180fe907666.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1133051570926947124/original/d859ffad-2f0e-4d0f-8e83-cacc2341a6cc.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1133051570926947124/original/199051db-979b-4c5e-9ae8-0e1c34995b5d.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1133051570926947124/original/bf1d106d-8797-4d31-a33e-a5d66d01e093.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1133051570926947124/original/a2ba1af6-2edd-4099-b917-4c9ee6121462.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1133051570926947124/original/fad5a82e-0177-43f0-a2c7-b1831a4bd97a.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1133051570926947124/original/4957c5d4-96fe-4413-bc85-00a6d59cba95.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1133051570926947124/original/3fc3db04-a571-429d-bbf5-d92581df0b37.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1133051570926947124/original/fa305483-8a8c-45e5-be87-2ed41ebb7559.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1133051570926947124/original/092d4738-45cb-4ac5-8ac4-2bc2d398ee65.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1133051570926947124/original/ce03b114-7dfe-4ec2-ae6a-4297830c7ee3.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1133051570926947124/original/e0315eda-3f31-423d-8c35-ed0746a8d5fa.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1133051570926947124/original/96c89ee4-4c00-4efd-bf3a-633044acfd02.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1133051570926947124/original/7faf24f2-2546-46a5-a0f6-5686d12bb3df.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1133051570926947124/original/147fdfe1-0725-4894-a3b3-6c4befcecc05.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1133051570926947124/original/f2aa8e5f-559e-4b50-994f-c5d426311502.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1133051570926947124/original/04485a4f-4cdb-4ec0-a5b1-7295e7248f04.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1133051570926947124/original/2343ada9-a233-412a-8f6d-9d44be7bd641.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1133051570926947124/original/c3851c47-fbac-48c4-8a2d-ad3faea616d7.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1133051570926947124/original/aa39aba4-5a3e-4e17-9450-a421bae61372.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1133051570926947124/original/f52a8969-2efe-4ab9-9709-303ae6b333e5.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1133051570926947124/original/e353f99e-32fc-45d6-9a18-e663d4e9c4b3.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1133051570926947124/original/e9ba6a63-a34d-4388-9b96-124fb4058464.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1133051570926947124/original/fb86b5dc-2451-4802-b716-279c48c6dd76.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1133051570926947124/original/aff0eb9a-c5a4-4dbb-b893-2fdd7ee05070.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1133051570926947124/original/1008a28a-7020-46ef-86f6-f3ac19bf5832.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1133051570926947124/original/c9738836-5adf-450a-8180-36126fbcdd7e.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1133051570926947124/original/d43a6245-b5fc-48e5-947d-cd9f79fa6617.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1133051570926947124/original/c9da55d2-715b-4eb6-87a4-1cdf6804bab0.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1133051570926947124/original/fc164fcd-4642-44b1-82f5-f8acca3930a6.jpeg", "https://a0.muscache.com/im/pictures/prohost-api/Hosting-1133051570926947124/original/8d571072-efc3-4c37-aa08-5b0f4c9f59ce.jpeg", "https://a0.muscache.com/im/pictures/hosting/Hosting-1133051570926947124/original/43df0850-9f5b-492d-8f0b-89b51d18ee88.jpeg", "https://a0.muscache.com/im/pictures/hosting/Hosting-1133051570926947124/original/c2b6ff25-326b-4643-a7ef-a7d0ab6b2dcd.jpeg", "https://a0.muscache.com/im/pictures/hosting/Hosting-1133051570926947124/original/87010fdd-4387-4235-befc-3122ae5a44df.jpeg", "https://a0.muscache.com/im/pictures/hosting/Hosting-1133051570926947124/original/dc710c46-f066-4fc0-8d97-47b69de5038b.jpeg", "https://a0.muscache.com/im/pictures/hosting/Hosting-1133051570926947124/original/e634f1e0-6ac4-425f-a014-ffc09cdf0090.jpeg"], "1_benahavis": ["https://a0.muscache.com/im/pictures/miso/Hosting-1334977026129344249/original/784ca71c-8373-4f1e-b351-c3a9c595a34f.jpeg", "https://a0.muscache.com/im/pictures/miso/Hosting-1334977026129344249/original/0b305b9d-5d5b-4742-9603-a92cbab8b105.jpeg", "https://a0.muscache.com/im/pictures/miso/Hosting-1334977026129344249/original/8bee4bdf-ee41-40c4-8bda-322b00fb2974.jpeg", "https://a0.muscache.com/im/pictures/miso/Hosting-1334977026129344249/original/9e5663fc-b533-4d33-9312-246b7692c1c1.jpeg", "https://a0.muscache.com/im/pictures/miso/Hosting-1334977026129344249/original/628d09e8-faed-4f8d-b352-fce83a31c0f2.jpeg", "https://a0.muscache.com/im/pictures/miso/Hosting-1334977026129344249/original/a2d34320-bae7-4f58-b74a-c6e27c7dc570.jpeg", "https://a0.muscache.com/im/pictures/miso/Hosting-1334977026129344249/original/197ef67d-9d15-49d6-b73d-8ef4e3ad588b.jpeg", "https://a0.muscache.com/im/pictures/miso/Hosting-1334977026129344249/original/0db62d07-3abc-4fce-9f54-818e6a2d5618.jpeg", "https://a0.muscache.com/im/pictures/miso/Hosting-1334977026129344249/original/3d388010-b090-4b34-8878-2acc9d18b17f.jpeg", "https://a0.muscache.com/im/pictures/miso/Hosting-1334977026129344249/original/e0a4f198-f79b-4611-bb95-a21a3b94e311.jpeg", "https://a0.muscache.com/im/pictures/miso/Hosting-1334977026129344249/original/1df81e78-a95f-4d8f-9c67-ebc7fb1494ad.jpeg", "https://a0.muscache.com/im/pictures/miso/Hosting-1334977026129344249/original/50864980-892d-421e-af21-ab62203472ef.jpeg", "https://a0.muscache.com/im/pictures/miso/Hosting-1334977026129344249/original/d1e9ccf0-b3cb-4244-9c05-069d2ea930cd.jpeg", "https://a0.muscache.com/im/pictures/miso/Hosting-1334977026129344249/original/551ad2ba-9f54-470c-bc08-62a826e9d2bb.jpeg", "https://a0.muscache.com/im/pictures/miso/Hosting-1334977026129344249/original/cc26fc66-8d82-42d0-91f9-7d573ab5d7d0.jpeg", "https://a0.muscache.com/im/pictures/miso/Hosting-1334977026129344249/original/dabd839e-6373-4bae-84a6-0a1a786cd262.jpeg", "https://a0.muscache.com/im/pictures/miso/Hosting-1334977026129344249/original/b8b4bb8f-9f40-441f-a68f-b0dfbb480b1d.jpeg", "https://a0.muscache.com/im/pictures/miso/Hosting-1334977026129344249/original/75105315-c2bd-43d9-91b0-8d70b0552319.jpeg", "https://a0.muscache.com/im/pictures/miso/Hosting-1334977026129344249/original/2aca2332-88c5-463f-bbae-f2f16aa48d8b.jpeg", "https://a0.muscache.com/im/pictures/miso/Hosting-1334977026129344249/original/918b31c0-105a-422b-bb32-81bccbe04885.jpeg", "https://a0.muscache.com/im/pictures/miso/Hosting-1334977026129344249/original/1247f56e-1bb0-44ea-a28d-b236924c8101.jpeg", "https://a0.muscache.com/im/pictures/hosting/Hosting-U3RheVN1cHBseUxpc3Rpbmc6MTMzNDk3NzAyNjEyOTM0NDI0OQ%3D%3D/original/04499c72-c4ae-48b0-9af3-81b43c43c110.jpeg", "https://a0.muscache.com/im/pictures/miso/Hosting-1334977026129344249/original/dff40f0b-9d94-4fb9-be24-5a748356b06d.jpeg", "https://a0.muscache.com/im/pictures/miso/Hosting-1334977026129344249/original/bee8149b-6391-4f45-898b-f55ae7a31071.jpeg", "https://a0.muscache.com/im/pictures/miso/Hosting-1334977026129344249/original/ec906c4a-a2e7-4756-b3d9-8422f34f8498.jpeg", "https://a0.muscache.com/im/pictures/miso/Hosting-1334977026129344249/original/af82af71-52ab-4aae-abd1-b3c851b49e50.jpeg", "https://a0.muscache.com/im/pictures/miso/Hosting-1334977026129344249/original/09546c5e-e1eb-4e01-9e68-3a040fd86d09.jpeg", "https://a0.muscache.com/im/pictures/miso/Hosting-1334977026129344249/original/e57f0892-944a-49f8-b311-90d8ecffbfdc.jpeg", "https://a0.muscache.com/im/pictures/miso/Hosting-1334977026129344249/original/87d30f7c-e9d2-4eab-89e1-f14d2fe550c8.jpeg", "https://a0.muscache.com/im/pictures/miso/Hosting-1334977026129344249/original/49f68f9d-fd1f-469b-8909-6a2e86619f49.jpeg", "https://a0.muscache.com/im/pictures/miso/Hosting-1334977026129344249/original/fcc7329d-c3f3-41da-912b-fea47c551c0c.jpeg", "https://a0.muscache.com/im/pictures/miso/Hosting-1334977026129344249/original/fb96c957-b5ba-4f6f-8a03-52bbad497191.jpeg", "https://a0.muscache.com/im/pictures/miso/Hosting-1334977026129344249/original/c275bdf6-35e7-41e8-bb73-64f0313bdb39.jpeg", "https://a0.muscache.com/im/pictures/miso/Hosting-1334977026129344249/original/0766635d-3c6a-4473-bc6a-24c79ca28186.jpeg", "https://a0.muscache.com/im/pictures/miso/Hosting-1334977026129344249/original/a0258d49-313a-4408-b353-e1d751e9df5f.jpeg", "https://a0.muscache.com/im/pictures/miso/Hosting-1334977026129344249/original/aea3854d-9c51-47c5-9225-a9cc1c0d0fef.jpeg", "https://a0.muscache.com/im/pictures/miso/Hosting-1334977026129344249/original/047e18a7-0df1-48f3-bad9-235e9beb23d6.jpeg", "https://a0.muscache.com/im/pictures/miso/Hosting-1334977026129344249/original/3de1f597-147f-46be-85a0-457251a8a49f.jpeg", "https://a0.muscache.com/im/pictures/miso/Hosting-1334977026129344249/original/54ca982d-f79b-4d77-8467-94736dab7f8d.jpeg"]}</script>
+</body>
+</html>
