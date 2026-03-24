@@ -323,24 +323,37 @@ const lbCounter = document.getElementById('lb-counter');
 const lbStrip = document.getElementById('lb-strip');
 
 function openLb(folder, idx, count) {
-  lbFolder=folder; lbCount=count; lbIdx=idx;
+  lbFolder=folder;
+  // Use remote photo count if available (more photos than local thumbnails)
+  const remote = getRemotePhotos()[folder];
+  lbCount = (remote && remote.length > count) ? remote.length : count;
+  lbIdx=idx;
   lb.classList.add('open');
   document.body.style.overflow='hidden';
-  // Build thumb strip
+  // Build thumb strip — use remote URLs for thumbs too if beyond local count
   lbStrip.innerHTML='';
-  for(let i=0;i<count;i++){
+  for(let i=0;i<lbCount;i++){
     const t=document.createElement('img');
-    t.src=`photos/thumbnails/${folder}/${String(i).padStart(2,'0')}.jpg`;
+    if (i < count) {
+      t.src=`photos/thumbnails/${folder}/${String(i).padStart(2,'0')}.jpg`;
+    } else if (remote && remote[i]) {
+      t.src=remote[i];
+    }
     t.onclick=()=>goLb(i);
     lbStrip.appendChild(t);
   }
   goLb(idx);
 }
 
+function getRemotePhotos() {
+  if (!window._rp) {
+    try { window._rp = JSON.parse(document.getElementById('remote-photos-data').textContent); } catch(e) { window._rp = {}; }
+  }
+  return window._rp;
+}
 function goLb(i) {
   lbIdx=i;
-  // Use Airbnb remote URLs for full-size, fall back to local
-  const remote = window.remotePhotos && window.remotePhotos[lbFolder];
+  const remote = getRemotePhotos()[lbFolder];
   lbImg.src = (remote && remote[i]) ? remote[i] : `photos/${lbFolder}/${String(i).padStart(2,'0')}.jpg`;
   lbCounter.textContent=`${i+1} / ${lbCount}`;
   lbStrip.querySelectorAll('img').forEach((t,j)=>t.classList.toggle('active',j===i));
@@ -374,8 +387,6 @@ lb.addEventListener('touchend', e => {
 // ===== MAP =====
 let map, mapReady = false;
 
-// Full-size photos loaded from Airbnb CDN (no local storage needed)
-window.remotePhotos = JSON.parse(document.getElementById('remote-photos-data').textContent);
 
 const listings = [
   {id:'10_new_golden_mile', lat:36.46466, lng:-5.04567, name:'New Golden Mile', price:'~550\u20ac', meta:'3ch 2sdb 6p \u2022 4.92\u2605 (71)', folder:'10_new_golden_mile', count:52},
