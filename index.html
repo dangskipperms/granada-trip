@@ -44,7 +44,11 @@ header p{font-size:11px;color:var(--td)}
 /* Lightbox */
 .lb{display:none;position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:1000;align-items:center;justify-content:center;flex-direction:column}
 .lb.open{display:flex}
-.lb img{max-height:80vh;max-width:92vw;object-fit:contain;border-radius:4px}
+.lb-stage{position:relative;max-height:80vh;max-width:92vw}
+.lb-stage img{max-height:80vh;max-width:92vw;object-fit:contain;border-radius:4px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);opacity:0;transition:opacity .15s}
+.lb-stage img.active{position:relative;opacity:1}
+.lb-spinner{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:28px;height:28px;border:2px solid #333;border-top-color:#888;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:translate(-50%,-50%) rotate(360deg)}}
 .lb .nav{position:absolute;top:50%;transform:translateY(-50%);font-size:36px;color:#555;cursor:pointer;padding:20px;user-select:none;transition:color .2s}
 .lb .nav:hover{color:#aaa}
 .lb .prev{left:8px}
@@ -125,7 +129,7 @@ footer{text-align:center;padding-top:32px;border-top:1px solid var(--border);col
 .leaflet-popup-close-button:hover{color:#333}
 
 /* Popup slideshow */
-.pop-slides{position:relative;width:220px;height:150px;overflow:hidden;border-radius:6px;margin-top:8px;background:#eee}
+.pop-slides{position:relative;width:220px;height:150px;overflow:hidden;border-radius:6px;margin-top:8px;background:#ddd url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28'%3E%3Ccircle cx='14' cy='14' r='12' fill='none' stroke='%23bbb' stroke-width='2' stroke-dasharray='20 40' stroke-linecap='round'%3E%3CanimateTransform attributeName='transform' type='rotate' from='0 14 14' to='360 14 14' dur='.8s' repeatCount='indefinite'/%3E%3C/circle%3E%3C/svg%3E") center no-repeat}
 .pop-slides img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .3s}
 .pop-slides img.vis{opacity:1}
 .pop-slides .sl-btn{position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.45);color:#fff;border:none;font-size:18px;padding:2px 8px;cursor:pointer;border-radius:3px;z-index:2;line-height:1}
@@ -283,7 +287,11 @@ footer{text-align:center;padding-top:32px;border-top:1px solid var(--border);col
   <div class="close" onclick="closeLb()">&times;</div>
   <div class="nav prev" onclick="navLb(-1)">&#8249;</div>
   <div class="nav next" onclick="navLb(1)">&#8250;</div>
-  <img id="lb-img" src="">
+  <div class="lb-stage" id="lb-stage">
+    <div class="lb-spinner" id="lb-spinner"></div>
+    <img id="lb-img-a" class="active" src="">
+    <img id="lb-img-b" src="">
+  </div>
   <div class="counter" id="lb-counter"></div>
   <div class="thumbstrip" id="lb-strip"></div>
 </div>
@@ -318,9 +326,12 @@ document.querySelectorAll('.ph').forEach(el => {
 // Lightbox
 let lbFolder, lbIdx, lbCount;
 const lb = document.getElementById('lb');
-const lbImg = document.getElementById('lb-img');
+const lbImgA = document.getElementById('lb-img-a');
+const lbImgB = document.getElementById('lb-img-b');
+const lbSpinner = document.getElementById('lb-spinner');
 const lbCounter = document.getElementById('lb-counter');
 const lbStrip = document.getElementById('lb-strip');
+let lbActive = 'a'; // which img is currently showing
 
 function openLb(folder, idx, count) {
   lbFolder=folder;
@@ -351,15 +362,40 @@ function getRemotePhotos() {
   }
   return window._rp;
 }
+function getLbSrc(i) {
+  const remote = getRemotePhotos()[lbFolder];
+  return (remote && remote[i]) ? remote[i] : `photos/${lbFolder}/${String(i).padStart(2,'0')}.jpg`;
+}
 function goLb(i) {
   lbIdx=i;
-  const remote = getRemotePhotos()[lbFolder];
-  lbImg.src = (remote && remote[i]) ? remote[i] : `photos/${lbFolder}/${String(i).padStart(2,'0')}.jpg`;
+  const src = getLbSrc(i);
+  // Crossfade: load into inactive img, then swap
+  const incoming = lbActive === 'a' ? lbImgB : lbImgA;
+  const outgoing = lbActive === 'a' ? lbImgA : lbImgB;
+  lbSpinner.style.display = 'block';
+  incoming.onload = () => {
+    lbSpinner.style.display = 'none';
+    incoming.classList.add('active');
+    outgoing.classList.remove('active');
+    lbActive = lbActive === 'a' ? 'b' : 'a';
+    // Reset transforms from swipe
+    incoming.style.transform = '';
+    incoming.style.opacity = '';
+    incoming.style.transition = '';
+  };
+  incoming.src = src;
+  // If cached, onload fires sync
+  if (incoming.complete && incoming.naturalWidth) incoming.onload();
+
   lbCounter.textContent=`${i+1} / ${lbCount}`;
   lbStrip.querySelectorAll('img').forEach((t,j)=>t.classList.toggle('active',j===i));
-  // Scroll active thumb into view
-  const active=lbStrip.querySelector('.active');
-  if(active)active.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});
+  const act=lbStrip.querySelector('.active');
+  if(act)act.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});
+
+  // Preload next and previous
+  [i+1, i-1].forEach(pi => {
+    if (pi >= 0 && pi < lbCount) { const p = new Image(); p.src = getLbSrc(pi); }
+  });
 }
 
 function navLb(dir) { goLb((lbIdx+dir+lbCount)%lbCount) }
@@ -379,7 +415,7 @@ lb.onclick = e => { if(e.target===lb)closeLb() };
 // Touch swipe for lightbox — follows finger, snaps, feels native
 (function(){
   let startX=0, startY=0, currentX=0, swiping=false, startTime=0;
-  const img = document.getElementById('lb-img');
+  function activeImg() { return lbActive === 'a' ? lbImgA : lbImgB; }
 
   lb.addEventListener('touchstart', e => {
     if (!lb.classList.contains('open')) return;
@@ -387,7 +423,7 @@ lb.onclick = e => { if(e.target===lb)closeLb() };
     startY = e.touches[0].clientY;
     startTime = Date.now();
     swiping = false;
-    img.style.transition = 'none';
+    activeImg().style.transition = 'none';
   }, {passive:true});
 
   lb.addEventListener('touchmove', e => {
@@ -396,47 +432,37 @@ lb.onclick = e => { if(e.target===lb)closeLb() };
     const dy = e.touches[0].clientY - startY;
     currentX = e.touches[0].clientX;
 
-    // Only swipe horizontally — if more vertical, bail
     if (!swiping && Math.abs(dy) > Math.abs(dx)) return;
     swiping = true;
     e.preventDefault();
 
-    // Follow finger with resistance at edges
     const resist = (lbIdx === 0 && dx > 0) || (lbIdx === lbCount-1 && dx < 0) ? 0.3 : 1;
-    img.style.transform = `translateX(${dx * resist}px)`;
-    img.style.opacity = Math.max(0.4, 1 - Math.abs(dx) / 600);
+    activeImg().style.transform = `translate(-50%,-50%) translateX(${dx * resist}px)`;
+    activeImg().style.opacity = Math.max(0.5, 1 - Math.abs(dx) / 500);
   }, {passive:false});
 
   lb.addEventListener('touchend', e => {
     if (!lb.classList.contains('open') || !swiping) return;
     const dx = currentX - startX;
     const dt = Date.now() - startTime;
-    const velocity = Math.abs(dx) / dt; // px per ms
+    const velocity = Math.abs(dx) / dt;
+    const ai = activeImg();
 
-    img.style.transition = 'transform 0.25s ease, opacity 0.25s ease';
-
-    // Swipe if moved enough or fast enough
     if (Math.abs(dx) > 60 || velocity > 0.3) {
-      // Slide out
       const dir = dx > 0 ? -1 : 1;
-      img.style.transform = `translateX(${dx > 0 ? '100vw' : '-100vw'})`;
-      img.style.opacity = '0';
+      // Just navigate — crossfade handles the transition
+      ai.style.transition = 'opacity 0.15s';
+      ai.style.opacity = '0';
       setTimeout(() => {
         navLb(dir);
-        // Slide in from opposite side
-        img.style.transition = 'none';
-        img.style.transform = `translateX(${dir > 0 ? '30vw' : '-30vw'})`;
-        img.style.opacity = '0';
-        requestAnimationFrame(() => {
-          img.style.transition = 'transform 0.2s ease, opacity 0.2s ease';
-          img.style.transform = 'translateX(0)';
-          img.style.opacity = '1';
-        });
-      }, 200);
+        ai.style.transition = '';
+        ai.style.transform = '';
+        ai.style.opacity = '';
+      }, 150);
     } else {
-      // Snap back
-      img.style.transform = 'translateX(0)';
-      img.style.opacity = '1';
+      ai.style.transition = 'transform 0.2s ease, opacity 0.2s ease';
+      ai.style.transform = '';
+      ai.style.opacity = '';
     }
     swiping = false;
   });
